@@ -59,6 +59,10 @@ android {
 
     testOptions {
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
     }
 }
 
@@ -85,7 +89,7 @@ def coverageClassDirs = [
         "$rootDir/growingio-autotracker-gradle-plugin/build/classes/java/main"
 ]
 
-task jacocoTestReport(type: JacocoReport, group: 'Reporting', dependsOn: 'connectedCheck') {
+task jacocoTestReport(type: JacocoReport, group: 'Reporting', dependsOn: 'testDebugUnitTest') {
     reports {
         xml.enabled = true
         html.enabled = true
@@ -143,4 +147,12 @@ dependencies {
     }
 
     compileOnly libraries.androidx.appcompat
+
+    testImplementation libraries.test.junit
+    testImplementation libraries.test.androidx_junit
+    testImplementation libraries.test.androidx_runner
+    testImplementation libraries.test.androidx_rules
+    testImplementation libraries.test.powermock_reflect
+    testImplementation "org.robolectric:robolectric:4.4"
+    testImplementation "com.growingio.android:autotracker-gradle-plugin:${releaseConfiguration.releaseVersion}"
 }

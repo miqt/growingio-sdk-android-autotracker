@@ -6,6 +6,7 @@
 # Java class files
 *.class
 # Generated files
+*.exec
 bin/
 gen/
 out/
