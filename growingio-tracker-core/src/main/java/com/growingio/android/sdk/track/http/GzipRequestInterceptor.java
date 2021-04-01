@@ -31,7 +31,11 @@ public class GzipRequestInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request originalRequest = chain.request();
-        RequestExtra extra = originalRequest.tag(RequestExtra.class);
+        Object tag = originalRequest.tag();
+        RequestExtra extra = null;
+        if (tag instanceof RequestExtra) {
+            extra = (RequestExtra) tag;
+        }
         if (originalRequest.body() == null
                 || originalRequest.header("Content-Encoding") != null
                 || extra == null

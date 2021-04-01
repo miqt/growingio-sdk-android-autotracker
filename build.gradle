@@ -11,7 +11,7 @@ buildscript {
         ]
 
         releaseConfiguration = [
-                releaseVersion    : "3.1.0-SNAPSHOT",
+                releaseVersion    : "3.1.0-hotfix-okhttp3.8.1",
                 releaseVersionCode: 30100,
         ]
 
@@ -53,7 +53,7 @@ buildscript {
 
                 'squareup' : [
                         'javapoet': 'com.squareup:javapoet:1.11.1',
-                        'okhttp3' : 'com.squareup.okhttp3:okhttp:3.12.1',
+                        'okhttp3' : 'com.squareup.okhttp3:okhttp:3.8.1',
                 ],
 
                 'others'   : [

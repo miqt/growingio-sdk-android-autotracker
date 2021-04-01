@@ -36,7 +36,12 @@ public class RetryInterceptor implements Interceptor {
             return response;
         }
 
-        RequestExtra extra = request.tag(RequestExtra.class);
+        Object tag = request.tag();
+        RequestExtra extra = null;
+        if (tag instanceof RequestExtra) {
+            extra = (RequestExtra) tag;
+        }
+
         if (extra != null && extra.getRetryTimes() > 0) {
             int retryNum = 0;
             while (!response.isSuccessful() && retryNum <= extra.getRetryTimes()) {

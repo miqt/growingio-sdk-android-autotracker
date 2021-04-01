@@ -20,7 +20,7 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
 public class DataPostRequestBuilder extends BaseRequestBuilder<DataPostRequestBuilder> {
-    private static final MediaType CONTENT_TYPE = MediaType.get("application/x-www-form-urlencoded");
+    private static final MediaType CONTENT_TYPE = MediaType.parse("application/x-www-form-urlencoded");
 
     private byte[] mBody = new byte[]{};
 

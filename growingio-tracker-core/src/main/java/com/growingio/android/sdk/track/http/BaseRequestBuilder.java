@@ -93,7 +93,7 @@ public abstract class BaseRequestBuilder<T extends BaseRequestBuilder> {
                 requestBuilder.addHeader(key, value);
             }
         }
-        requestBuilder.tag(RequestExtra.class, new RequestExtra(mRetryTimes, mEnableGzip));
+        requestBuilder.tag(new RequestExtra(mRetryTimes, mEnableGzip));
         return new HttpRequest(requestBuilder.build());
     }
 }

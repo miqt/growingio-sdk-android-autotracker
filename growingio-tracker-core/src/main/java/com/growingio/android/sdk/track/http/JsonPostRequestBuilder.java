@@ -20,7 +20,7 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
 public class JsonPostRequestBuilder extends BaseRequestBuilder<JsonPostRequestBuilder> {
-    private static final MediaType CONTENT_TYPE = MediaType.get("application/json");
+    private static final MediaType CONTENT_TYPE = MediaType.parse("application/json");
 
     private String mBody = "";
 
