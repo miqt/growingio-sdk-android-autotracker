@@ -39,11 +39,25 @@ public class UserInfoProvider extends ListenerContainer<OnUserIdChangedListener,
         return SingleInstance.INSTANCE;
     }
 
+    public String getLoginUserKey() {
+        return PersistentDataProvider.get().getLoginUserKey();
+    }
+
     public String getLoginUserId() {
         return PersistentDataProvider.get().getLoginUserId();
     }
 
     public void setLoginUserId(String userId) {
+        setLoginUserId(null, userId);
+    }
+
+    public void setLoginUserId(String userKey, String userId) {
+        if (TextUtils.isEmpty(userKey)) {
+            PersistentDataProvider.get().setLoginUserKey(null);
+        } else if (!ObjectUtils.equals(getLoginUserKey(), userKey)) {
+            PersistentDataProvider.get().setLoginUserKey(userKey);
+        }
+
         if (TextUtils.isEmpty(userId)) {
             // to null, never send visit, just return
             PersistentDataProvider.get().setLoginUserId(null);
