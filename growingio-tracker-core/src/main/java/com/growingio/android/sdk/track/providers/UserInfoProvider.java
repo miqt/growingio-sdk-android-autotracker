@@ -48,10 +48,10 @@ public class UserInfoProvider extends ListenerContainer<OnUserIdChangedListener,
     }
 
     public void setLoginUserId(String userId) {
-        setLoginUserId(null, userId);
+        setLoginUserId(userId, null);
     }
 
-    public void setLoginUserId(String userKey, String userId) {
+    public void setLoginUserId(String userId, String userKey) {
         // 考虑DataSharer存储限制
         if (userKey != null && userKey.length() > 1000) {
             Logger.e(TAG, ErrorLog.USER_KEY_TOO_LONG);

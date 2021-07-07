@@ -204,7 +204,7 @@ public class ProviderTest {
         Truth.assertThat(UserInfoProvider.get().getLoginUserKey()).isEqualTo("");
         Truth.assertThat(UserInfoProvider.get().getLoginUserId()).isEqualTo("");
 
-        // id设置为null， 清空key和id
+        // id为null， 清空key和id
         UserInfoProvider.get().setLoginUserId("key5", "key5");
         Truth.assertThat(UserInfoProvider.get().getLoginUserKey()).isEqualTo("key5");
         Truth.assertThat(UserInfoProvider.get().getLoginUserId()).isEqualTo("key5");
