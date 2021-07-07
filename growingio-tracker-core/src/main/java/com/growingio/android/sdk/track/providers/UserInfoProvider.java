@@ -54,7 +54,7 @@ public class UserInfoProvider extends ListenerContainer<OnUserIdChangedListener,
     public void setLoginUserId(String userKey, String userId) {
         // DataSharer存储限制
         if (userKey.length() > 1000) {
-            Logger.e(TAG, ErrorLog.USER_ID_TOO_LONG);
+            Logger.e(TAG, ErrorLog.USER_KEY_TOO_LONG);
             return;
         }
 
