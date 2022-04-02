@@ -25,7 +25,7 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
 import com.growingio.android.sdk.TrackerContext;
-import com.growingio.android.sdk.track.data.PersistentDataProvider;
+import com.growingio.android.sdk.track.ipc.PersistentDataProvider;
 import com.growingio.android.sdk.track.log.Logger;
 import com.growingio.android.sdk.track.utils.ConstantPool;
 import com.growingio.android.sdk.track.utils.DeviceUtil;
@@ -114,13 +114,17 @@ public class DeviceInfoProvider {
         return mScreenWidth;
     }
 
-    @SuppressLint({"MissingPermission", "HardwareIds"})
+    @SuppressLint("MissingPermission")
     public String getImei() {
         if (TextUtils.isEmpty(mImei)) {
             if (PermissionUtil.checkReadPhoneStatePermission()) {
                 try {
                     TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-                    mImei = tm.getDeviceId();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        mImei = tm.getImei();
+                    } else {
+                        mImei = tm.getDeviceId();
+                    }
                 } catch (Throwable e) {
                     Logger.d(TAG, "don't have permission android.permission.READ_PHONE_STATE,initIMEI failed ");
                 }
@@ -177,7 +181,9 @@ public class DeviceInfoProvider {
         if (TextUtils.isEmpty(result)) {
             result = UUID.randomUUID().toString();
         }
-        PersistentDataProvider.get().setDeviceId(result);
+        if (result != null && result.length() != 0) {
+            PersistentDataProvider.get().setDeviceId(result);
+        }
         return result;
     }
 }

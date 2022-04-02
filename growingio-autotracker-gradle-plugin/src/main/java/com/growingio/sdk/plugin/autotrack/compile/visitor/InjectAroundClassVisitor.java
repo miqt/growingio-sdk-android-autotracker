@@ -30,6 +30,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class InjectAroundClassVisitor extends ClassVisitor {
@@ -37,8 +39,8 @@ public class InjectAroundClassVisitor extends ClassVisitor {
     private final Log mLog;
     private String mCurrentClass;
 
-    public InjectAroundClassVisitor(ClassVisitor classVisitor, Context context) {
-        super(context.getASMVersion(), classVisitor);
+    public InjectAroundClassVisitor(int api, ClassVisitor classVisitor, Context context) {
+        super(api, classVisitor);
         mContext = context;
         mLog = mContext.getLog();
     }
@@ -52,13 +54,13 @@ public class InjectAroundClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        return new AroundMethodVisitor(mv, access, name, desc);
+        return new AroundMethodVisitor(api, mv, access, name, desc);
     }
 
     private final class AroundMethodVisitor extends GeneratorAdapter {
 
-        AroundMethodVisitor(MethodVisitor mv, int access, String name, String desc) {
-            super(mContext.getASMVersion(), mv, access, name, desc);
+        AroundMethodVisitor(int api, MethodVisitor mv, int access, String name, String desc) {
+            super(api, mv, access, name, desc);
         }
 
         @Override
@@ -119,21 +121,27 @@ public class InjectAroundClassVisitor extends ClassVisitor {
     }
 
     private TargetMethod findTargetMethod(String className, String methodName, String methodDesc) {
-        TargetClass targetClass = findTargetClass(className);
-        if (targetClass != null) {
-            return targetClass.getTargetMethod(methodName, methodDesc);
+        List<TargetClass> targetClass = findTargetClass(className);
+        for (TargetClass tClass : targetClass) {
+            if (tClass != null) {
+                TargetMethod method = tClass.getTargetMethod(methodName, methodDesc);
+                if (method != null) {
+                    return method;
+                }
+            }
         }
         return null;
     }
 
-    private TargetClass findTargetClass(String className) {
+    private List<TargetClass> findTargetClass(String className) {
+        List<TargetClass> list = new ArrayList<>();
         Map<String, TargetClass> aroundHookClasses = HookClassesConfig.getAroundHookClasses();
         for (String clazz : aroundHookClasses.keySet()) {
             if (isAssignable(className, clazz)) {
-                return aroundHookClasses.get(clazz);
+                list.add(aroundHookClasses.get(clazz));
             }
         }
-        return null;
+        return list;
     }
 
     private boolean isAssignable(String subClassName, String superClassName) {
@@ -147,7 +155,7 @@ public class InjectAroundClassVisitor extends ClassVisitor {
             Class<?> subClass = mContext.getClassLoader().loadClass(subClassName);
             Class<?> superClass = mContext.getClassLoader().loadClass(superClassName);
             return superClass.isAssignableFrom(subClass);
-        } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
+        } catch (ClassNotFoundException | NoClassDefFoundError | SecurityException ignored) {
         }
         return false;
     }

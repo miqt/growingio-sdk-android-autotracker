@@ -18,6 +18,7 @@ package com.growingio.android.volley;
 
 import android.util.Log;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -28,7 +29,7 @@ import com.android.volley.toolbox.RequestFuture;
 import com.growingio.android.sdk.track.http.EventResponse;
 import com.growingio.android.sdk.track.http.EventUrl;
 import com.growingio.android.sdk.track.log.Logger;
-import com.growingio.android.sdk.track.modelloader.DataFetcher;
+import com.growingio.android.sdk.track.middleware.http.HttpDataFetcher;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @author cpacm 2021/3/31
  */
-public class VolleyDataFetcher implements DataFetcher<EventResponse> {
+public class VolleyDataFetcher implements HttpDataFetcher<EventResponse> {
     private static final String TAG = "VolleyDataFetcher";
     public static final VolleyRequestFactory DEFAULT_REQUEST_FACTORY = GioRequest::new;
 
@@ -68,16 +69,19 @@ public class VolleyDataFetcher implements DataFetcher<EventResponse> {
     public void loadData(DataCallback<? super EventResponse> callback) {
         request = requestFactory.create(
                 url.toUrl(),
+                url.getHeaders(),
+                url.getMediaType(),
+                url.getRequestBody(),
                 callback::onDataReady,
-                callback::onLoadFailed,
-                url.getHeaders());
+                callback::onLoadFailed
+        );
         requestQueue.add(request);
     }
 
     @Override
     public EventResponse executeData() {
         RequestFuture<EventResponse> future = RequestFuture.newFuture();
-        request = requestFactory.create(url.toUrl(), future, future, url.getHeaders());
+        request = requestFactory.create(url.toUrl(), url.getHeaders(), url.getMediaType(), url.getRequestBody(), future, future);
         requestQueue.add(request);
         try {
             return future.get(5L, TimeUnit.SECONDS);
@@ -119,20 +123,26 @@ public class VolleyDataFetcher implements DataFetcher<EventResponse> {
         private final Response.Listener<EventResponse> callback;
         private final Response.ErrorListener listener;
         private final Map<String, String> headers;
+        private final byte[] requestData;
+        private final String mediaType;
 
         public GioRequest(String url, Response.Listener<EventResponse> callback, Response.ErrorListener errorListener) {
-            this(url, callback, errorListener, Collections.emptyMap());
+            this(url, Collections.emptyMap(), "application/json", null, callback, errorListener);
         }
 
         public GioRequest(
                 String url,
+                Map<String, String> headers,
+                String mediaType,
+                byte[] data,
                 Response.Listener<EventResponse> callback,
-                Response.ErrorListener errorListener,
-                Map<String, String> headers) {
-            super(Method.GET, url, null);
+                Response.ErrorListener errorListener) {
+            super(Method.POST, url, null);
             this.callback = callback;
+            this.requestData = data;
             this.listener = errorListener;
             this.headers = headers;
+            this.mediaType = mediaType;
         }
 
         @Override
@@ -142,6 +152,8 @@ public class VolleyDataFetcher implements DataFetcher<EventResponse> {
 
         @Override
         protected VolleyError parseNetworkError(VolleyError volleyError) {
+            //Giokit inject point
+            //GioHttp.parseGioKitVolleyError
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "Volley failed to retrieve response", volleyError);
             }
@@ -152,12 +164,24 @@ public class VolleyDataFetcher implements DataFetcher<EventResponse> {
         }
 
         @Override
+        public byte[] getBody() throws AuthFailureError {
+            return requestData;
+        }
+
+        @Override
         protected Response<byte[]> parseNetworkResponse(NetworkResponse response) {
+            //Giokit inject point
+            //GioHttp.parseGioKitVolleySuccess
             if (!isCanceled()) {
                 EventResponse eventResponse = new EventResponse(true, new ByteArrayInputStream(response.data), response.data.length);
                 callback.onResponse(eventResponse);
             }
             return Response.success(response.data, HttpHeaderParser.parseCacheHeaders(response));
+        }
+
+        @Override
+        public String getBodyContentType() {
+            return mediaType;
         }
 
         @Override

@@ -15,26 +15,33 @@
  */
 package com.growingio.android.oaid;
 
-import android.content.Context;
+import android.app.Application;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.growingio.android.sdk.track.modelloader.DataFetcher;
+import com.growingio.android.sdk.TrackerContext;
 import com.growingio.android.sdk.track.modelloader.ModelLoader;
 import com.growingio.android.sdk.track.modelloader.TrackerRegistry;
 import com.growingio.android.sdk.track.utils.OaidHelper;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.Thread.sleep;
 
 @Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
 public class OaidTest {
-    private final Context context = ApplicationProvider.getApplicationContext();
+    private final Application context = ApplicationProvider.getApplicationContext();
+
+    @Before
+    public void setup() {
+        TrackerContext.init(context);
+    }
 
     @Test
     public void oaid() {
@@ -43,20 +50,50 @@ public class OaidTest {
         module.registerComponents(context, trackerRegistry);
         trackerRegistry.register(OaidHelper.class, String.class, new OaidDataLoader.Factory(context));
         ModelLoader<OaidHelper, String> modelLoader = trackerRegistry.getModelLoader(OaidHelper.class, String.class);
-        modelLoader.buildLoadData(new OaidHelper()).fetcher.loadData(new DataFetcher.DataCallback<String>() {
-            @Override
-            public void onDataReady(String data) {
-                assertThat(data).isNull();
-            }
-
-            @Override
-            public void onLoadFailed(Exception e) {
-
-            }
-        });
-        modelLoader.buildLoadData(new OaidHelper()).fetcher.cleanup();
-        modelLoader.buildLoadData(new OaidHelper()).fetcher.cancel();
         assertThat(String.class).isEqualTo(modelLoader.buildLoadData(new OaidHelper()).fetcher.getDataClass());
+    }
 
+    @Test
+    public void oaidConfig1() {
+        TrackerRegistry trackerRegistry = TrackerContext.get().getRegistry();
+        OaidConfig config = new OaidConfig().setProvideOaid("cpacm");
+        trackerRegistry.register(OaidHelper.class, String.class, new OaidDataLoader.Factory(context, config));
+        ModelLoader<OaidHelper, String> modelLoader = trackerRegistry.getModelLoader(OaidHelper.class, String.class);
+        String oaid = modelLoader.buildLoadData(new OaidHelper()).fetcher.executeData();
+        assertThat(oaid).isEqualTo("cpacm");
+    }
+
+    @Test
+    public void oaidConfig2() {
+        TrackerRegistry trackerRegistry = TrackerContext.get().getRegistry();
+        OaidConfig config = new OaidConfig().setProvideOaidCallback(context -> {
+            try {
+                sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "cpacm_job";
+        });
+        trackerRegistry.register(OaidHelper.class, String.class, new OaidDataLoader.Factory(context, config));
+        ModelLoader<OaidHelper, String> modelLoader = trackerRegistry.getModelLoader(OaidHelper.class, String.class);
+        String oaid = modelLoader.buildLoadData(new OaidHelper()).fetcher.executeData();
+        assertThat(oaid).isNull();
+        try {
+            sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        oaid = modelLoader.buildLoadData(new OaidHelper()).fetcher.executeData();
+        assertThat(oaid).isEqualTo("cpacm_job");
+    }
+
+    @Test
+    public void oaidConfig3() {
+        TrackerRegistry trackerRegistry = TrackerContext.get().getRegistry();
+        OaidConfig config = new OaidConfig().setProvideCert("UNKNOWN CERT");
+        trackerRegistry.register(OaidHelper.class, String.class, new OaidDataLoader.Factory(context, config));
+        ModelLoader<OaidHelper, String> modelLoader = trackerRegistry.getModelLoader(OaidHelper.class, String.class);
+        String oaid = modelLoader.buildLoadData(new OaidHelper()).fetcher.executeData();
+        assertThat(oaid).isNull();
     }
 }

@@ -129,8 +129,10 @@ public class UtilsTest {
         Truth.assertThat(state.isMobileData()).isTrue();
         Truth.assertThat(state.isConnected()).isTrue();
         Truth.assertThat(state.getNetworkName()).isEqualTo("2G");
-        Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_MOBILE, TelephonyManager.NETWORK_TYPE_CDMA, "Test Network")).isEqualTo("3G");
+        Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_MOBILE, TelephonyManager.NETWORK_TYPE_CDMA, "Test Network")).isEqualTo("2G");
+        Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_MOBILE, TelephonyManager.NETWORK_TYPE_TD_SCDMA, "Test Network")).isEqualTo("3G");
         Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_MOBILE, TelephonyManager.NETWORK_TYPE_LTE, "Test Network")).isEqualTo("4G");
+        Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_MOBILE, TelephonyManager.NETWORK_TYPE_NR, "Test Network")).isEqualTo("5G");
         Truth.assertThat(NetworkUtil.getNetworkName(ConnectivityManager.TYPE_WIFI, TelephonyManager.NETWORK_TYPE_LTE, "Test Network")).isEqualTo("WIFI");
     }
 
@@ -152,8 +154,8 @@ public class UtilsTest {
 
     @Test
     public void systemTest() {
-        Truth.assertThat(SystemUtil.getProcessName()).isNull();
-        Truth.assertThat(SystemUtil.isMainProcess(application)).isFalse();
+        Truth.assertThat(SystemUtil.getProcessName()).isEqualTo("com.growingio.android.sdk.track.test");
+        Truth.assertThat(SystemUtil.isMainProcess(application)).isTrue();
         //SystemUtil.killAppProcess(application);
 
         SysTrace.beginSection("test");

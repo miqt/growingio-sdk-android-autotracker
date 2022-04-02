@@ -22,9 +22,8 @@ import android.text.TextUtils;
 import androidx.annotation.CallSuper;
 
 import com.growingio.android.sdk.Tracker;
-import com.growingio.android.sdk.track.cdp.CdpEventBuildInterceptor;
-import com.growingio.android.sdk.track.cdp.ResourceItem;
-import com.growingio.android.sdk.track.cdp.ResourceItemCustomEvent;
+import com.growingio.android.sdk.track.events.cdp.ResourceItem;
+import com.growingio.android.sdk.track.events.cdp.ResourceItemCustomEvent;
 import com.growingio.android.sdk.track.log.Logger;
 import com.growingio.android.sdk.track.providers.ConfigurationProvider;
 
@@ -55,8 +54,8 @@ public class CdpTracker extends Tracker {
 
     public void trackCustomEvent(String eventName, Map<String, String> attributes, String itemKey, String itemId) {
         if (!isInited) return;
-        if (TextUtils.isEmpty(itemKey) || TextUtils.isEmpty(itemId)) {
-            Logger.e(TAG, "trackCustomEvent: itemKey or itemId is NULL");
+        if (TextUtils.isEmpty(eventName) || TextUtils.isEmpty(itemKey) || TextUtils.isEmpty(itemId)) {
+            Logger.e(TAG, "trackCustomEvent: eventName, itemKey or itemId is NULL");
             return;
         }
 

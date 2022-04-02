@@ -49,13 +49,16 @@ jobs:
         run: |
           bash ./gradle/publishAllToMavenLocal.sh
           bash ./config/checkstyle/checkstyle.sh
+          ./gradlew lint
           ./gradlew assembleDebug
 
       - name: Run tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 27
+          api-level: 29
           profile: Nexus 6
+          target: google_apis
+          arch: x86
           # emulator-build: 7425822
           script: |
             adb shell logcat -c
@@ -75,6 +78,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonarqube
+        continue-on-error: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

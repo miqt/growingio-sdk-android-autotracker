@@ -19,7 +19,7 @@ package com.growingio.android.okhttp3;
 import com.growingio.android.sdk.track.http.EventResponse;
 import com.growingio.android.sdk.track.http.EventUrl;
 import com.growingio.android.sdk.track.log.Logger;
-import com.growingio.android.sdk.track.modelloader.DataFetcher;
+import com.growingio.android.sdk.track.middleware.http.HttpDataFetcher;
 
 import java.io.IOException;
 import java.util.Map;
@@ -37,7 +37,7 @@ import okhttp3.ResponseBody;
  *
  * @author cpacm 2021/3/31
  */
-public class OkHttpDataFetcher implements DataFetcher<EventResponse>, Callback {
+public class OkHttpDataFetcher implements HttpDataFetcher<EventResponse>, Callback {
     private static final String TAG = "OkHttpDataFetcher";
 
     private final Call.Factory client;
@@ -87,6 +87,7 @@ public class OkHttpDataFetcher implements DataFetcher<EventResponse>, Callback {
                 long contentLength = responseBody.contentLength();
                 return new EventResponse(successed, responseBody.byteStream(), contentLength);
             } else {
+                Logger.e(TAG, "EventHttpSender failed with code:" + response.code());
                 return new EventResponse(false);
             }
         } catch (IOException e) {
@@ -95,6 +96,8 @@ public class OkHttpDataFetcher implements DataFetcher<EventResponse>, Callback {
         } catch (NullPointerException e) {
             Logger.e(TAG, e);
             return new EventResponse(false);
+        } finally {
+            cleanup();
         }
     }
 
@@ -127,16 +130,20 @@ public class OkHttpDataFetcher implements DataFetcher<EventResponse>, Callback {
 
     @Override
     public void onResponse(Call call, Response response) {
-        responseBody = response.body();
-        if (response.isSuccessful()) {
-            if (responseBody == null) {
-                throw new IllegalArgumentException("Must not be null or empty");
+        try {
+            responseBody = response.body();
+            if (response.isSuccessful()) {
+                if (responseBody == null) {
+                    throw new IllegalArgumentException("Must not be null or empty");
+                }
+                long contentLength = responseBody.contentLength();
+                EventResponse eventResponse = new EventResponse(true, responseBody.byteStream(), contentLength);
+                callback.onDataReady(eventResponse);
+            } else {
+                callback.onLoadFailed(new Exception(response.message()));
             }
-            long contentLength = responseBody.contentLength();
-            EventResponse eventResponse = new EventResponse(true, responseBody.byteStream(), contentLength);
-            callback.onDataReady(eventResponse);
-        } else {
-            callback.onLoadFailed(new Exception(response.message()));
+        } finally {
+            cleanup();
         }
     }
 }

@@ -157,6 +157,7 @@ public class DebuggerTest implements WebSocketHandler.OnWebSocketListener {
     public void socketHandlerTest() {
         Request request = new Request.Builder().url(getWsUrl()).build();
         client.newWebSocket(request, webSocketHandler);
+        Truth.assertThat(getWsUrl()).contains(String.valueOf(request.url().port()));
     }
 
 
@@ -227,7 +228,6 @@ public class DebuggerTest implements WebSocketHandler.OnWebSocketListener {
         service.socketState.getAndSet(1);
         service.onMessage(new JSONObject().put("msgType", DebuggerEventWrapper.SERVICE_LOGGER_OPEN).toString());
         service.onActivityLifecycle(ActivityLifecycleEvent.createOnStartedEvent(activity));
-        service.showExitDialog();
         service.onFailed();
         service.exitDebugger();
         service.onQuited();

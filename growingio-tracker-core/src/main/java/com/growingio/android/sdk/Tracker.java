@@ -28,7 +28,8 @@ import android.util.Log;
 import android.view.View;
 
 import com.growingio.android.sdk.track.TrackMainThread;
-import com.growingio.android.sdk.track.data.PersistentDataProvider;
+import com.growingio.android.sdk.track.events.CustomEvent;
+import com.growingio.android.sdk.track.ipc.PersistentDataProvider;
 import com.growingio.android.sdk.track.events.TrackEventGenerator;
 import com.growingio.android.sdk.track.log.Logger;
 import com.growingio.android.sdk.track.modelloader.ModelLoader;
@@ -76,7 +77,7 @@ public class Tracker {
 
         loadAnnotationGeneratedModules(application);
         // 支持配置中注册模块, 如加密模块等事件模块需要先于所有事件发送注册
-        for (LibraryGioModule component : ConfigurationProvider.core().getPreoloadComponents()) {
+        for (LibraryGioModule component : ConfigurationProvider.core().getPreloadComponents()) {
             component.registerComponents(application, TrackerContext.get().getRegistry());
         }
     }
@@ -102,6 +103,16 @@ public class Tracker {
             attributes = new HashMap<>(attributes);
         }
         TrackEventGenerator.generateCustomEvent(eventName, attributes);
+    }
+
+    public void trackCustomEventWithAttrBuilder(String eventName, CustomEvent.AttributesBuilder attributesBuilder) {
+        if (!isInited) return;
+        if (TextUtils.isEmpty(eventName)) {
+            Logger.e(TAG, "trackCustomEvent: eventName is NULL");
+            return;
+        }
+
+        TrackEventGenerator.generateCustomEvent(eventName, attributesBuilder.getAttributes());
     }
 
     public void setConversionVariables(Map<String, String> variables) {
@@ -181,10 +192,6 @@ public class Tracker {
 
     public void onActivityNewIntent(@NonNull Activity activity, Intent intent) {
         if (!isInited) return;
-        if (activity == null) {
-            Logger.e(TAG, "activity is NULL");
-            return;
-        }
         ActivityStateProvider.get().onActivityNewIntent(activity, intent);
     }
 
